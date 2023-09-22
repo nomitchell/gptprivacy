@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 import openai
 import os
+import sqlite3
+import trafilatura
+import validators
 
 app = Flask(__name__)
 
@@ -15,20 +18,26 @@ def index():
 @app.route('/query', methods=['GET', 'POST'])
 def query():
     print('query called')
-    '''
+    
     if request.method == 'GET':
         textInput = request.args.get('textInput')
     elif request.method == 'POST':
         textInput = request.form['textInput']
-    '''
-    textInput = request.args.get('textInput') if request.method == 'GET' else request.form['textInput']
+    
+    if validators.url(textInput):
+        downloaded = trafilatura.fetch_url('https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ')
+        textInput = trafilatura.extract(downloaded)
+
+        if len(textInput) < 1000:
+            return jsonify(content='Error: html page could not be read, please user alternate method')
 
     messages = [{"role": "user", "content": (prompt + textInput)}]
 
     try:
         print('sending')
         response = openai.ChatCompletion.create(
-            model='gpt-4', 
+            #model='gpt-3.5-turbo-16k', 
+            model='gpt-4',
             messages=messages
         )
         content = response.choices[0].message["content"]

@@ -15,7 +15,7 @@ def index():
 def gpt4():
     user_input = request.args.get('user_input') if request.method == 'GET' else request.form['user_input']
     
-    messages = [{"role": "user", "content": (user_input``)}]
+    messages = [{"role": "user", "content": (user_input)}]
 
     try:
         response = openai.ChatCompletion.create(

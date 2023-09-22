@@ -1,4 +1,5 @@
-text = '-Blah blah blah -Gorb gloob glorb -Test test this is a test'
+import trafilatura
 
-text.replace('-', '***')
+downloaded = trafilatura.fetch_url('https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ')
+text = trafilatura.extract(downloaded)
 print(text)
