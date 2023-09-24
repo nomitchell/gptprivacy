@@ -36,8 +36,8 @@ def query():
     try:
         print('sending')
         response = openai.ChatCompletion.create(
-            #model='gpt-3.5-turbo-16k', 
-            model='gpt-4',
+            model='gpt-3.5-turbo-16k', 
+            #model='gpt-4',
             messages=messages
         )
         content = response.choices[0].message["content"]
