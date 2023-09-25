@@ -11,8 +11,12 @@
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
     </head>
     <body>
+        <h1>GPTprivacy</h1>
+        <div class="about-container">
+            <p>This website analyzes privacy policies and outputs key information like what kinds of information is collected, how it is collected, how the information is stored, whether it can be deleted or not, and other shady practices. This is done using the openai api, and makes a request with the GPT-4 model. You may input either the URL to the privacy policy page or copy and paste the page's text (ctrl+a, ctrl+c).</p>
+        </div>
         <div class="chat-container">
-            <h1>Copy and Paste Text</h1>
+            <h3>Copy and Paste Text</h3>
             <form id="chat-form">
                 <input
                     type="text"
