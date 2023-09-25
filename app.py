@@ -1,11 +1,29 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for, redirect
+from flask_sqlalchemy import SQLAlchemy
 import openai
 import os
-import sqlite3
 import trafilatura
 import validators
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pastqueries.sqlite3'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+class pastQuery(db.Model):
+    _id = db.Column("id", db.Integer, primary_key=True)
+    inputUrl = db.Column(db.String(200), nullable=True, unique=True)
+    outputText = db.Column(db.String(1500), nullable=False)
+
+    def __init__(self, inputUrl, outputText):
+        self.inputUrl = inputUrl
+        self.outputText = outputText
+
+with app.app_context():
+    db.create_all()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -18,14 +36,22 @@ def index():
 @app.route('/query', methods=['GET', 'POST'])
 def query():
     print('query called')
-    
+
     if request.method == 'GET':
         textInput = request.args.get('textInput')
     elif request.method == 'POST':
         textInput = request.form['textInput']
     
     if validators.url(textInput):
-        downloaded = trafilatura.fetch_url('https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ')
+        savedURL = textInput
+
+        dbtext = pastQuery.query.filter_by(inputUrl = textInput).first()
+        if dbtext:
+            print("Already searched, delivering from db")
+            return jsonify(content=dbtext.outputText)
+
+        print("This is new")
+        downloaded = trafilatura.fetch_url(textInput)
         textInput = trafilatura.extract(downloaded)
 
         if len(textInput) < 1000:
@@ -43,10 +69,38 @@ def query():
         content = response.choices[0].message["content"]
     except openai.error.RateLimitError:
         content = "Rate limit has been reached, please try again later."
+        return jsonify(content=content)
+    except openai.error.APIError:
+        content = "API error"
+        return jsonify(content=content)
+    except openai.error.Timeout:
+        content = "Timeout error"
+        return jsonify(content=content)
+    except openai.error.APIConnectionError:
+        content = "Connection error"
+        return jsonify(content=content)
+    except openai.error.InvalidRequestError:
+        content = "Invalid request error"
+        return jsonify(content=content)
+    except openai.error.AuthenticationError:
+        content = "Authentication error"
+        return jsonify(content=content)
+    except openai.error.PermissionError:
+        content = "Permission error"
+        return jsonify(content=content)
+    except openai.error.ServiceUnavailableError:
+        content = "Service unavailable error"
+        return jsonify(content=content)
     except:
+        print("error:", openai.error)
         content = "Error has occured, please contact administrator."
+        return jsonify(content=content)
     
     content = content.replace('~*', '<br>-')
+
+    newQuery = pastQuery(savedURL, content)
+    db.session.add(newQuery)
+    db.session.commit()
 
     return jsonify(content=content)
 
