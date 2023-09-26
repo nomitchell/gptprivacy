@@ -94,7 +94,7 @@ def query():
         return jsonify(content=content)
     except:
         print("error:", openai.error)
-        content = "Error has occured, please contact administrator."
+        content = "Unknown error has occured, please contact administrator."
         return jsonify(content=content)
     
     content = content.replace('~*', '<br>-')
