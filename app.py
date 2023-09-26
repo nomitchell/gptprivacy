@@ -99,9 +99,11 @@ def query():
     
     content = content.replace('~*', '<br>-')
 
-    newQuery = pastQuery(savedURL, content)
-    db.session.add(newQuery)
-    db.session.commit()
+    if savedURL:
+        newQuery = pastQuery(savedURL, content)
+        db.session.add(newQuery)
+        db.session.commit()
+        savedURL = None
 
     return jsonify(content=content)
 
